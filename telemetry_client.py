@@ -13,6 +13,7 @@ class TelemetryClient:
     mqtt_client = None
     mqtt_client_expired_at_ticks = None
     number_of_cloud_events = 0
+    connection = None
 
     def init(self):
         print('init telemetry client')
@@ -27,16 +28,22 @@ class TelemetryClient:
             try_or_retry_times(self._get_mqtt_client, 3)
 
         def send_telemetry():
-            print('send telemetry')
+            if not self.connection.isconnected():
+                self.connection = network.Cellular()
+
+                while not self.connection.isconnected():
+                    print("Waiting for network connection...")
+                    sleep(4)
+
             self.number_of_cloud_events += 1
             self.mqtt_client.send(dumps(telemetry))
 
         try_or_retry_times(send_telemetry, 3)
 
     def _get_mqtt_client(self):
-        conn = network.Cellular()
+        self.connection = network.Cellular()
 
-        while not conn.isconnected():
+        while not self.connection.isconnected():
             print("Waiting for network connection...")
             sleep(4)
 
