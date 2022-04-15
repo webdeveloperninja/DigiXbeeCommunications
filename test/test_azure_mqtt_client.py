@@ -9,7 +9,7 @@ mock_umqtt = MagicMock()
 sys.modules['umqtt.simple'] = mock_umqtt
 sys.modules['machine'] = MagicMock()
 
-from connection import AzureMQTT
+from azure_mqtt_client import AzureMQTT
 
 
 class TestAzureMQTT(unittest.TestCase):
