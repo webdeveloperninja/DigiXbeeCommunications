@@ -5,7 +5,7 @@ from retry import try_or_retry_times
 from json import dumps
 from configuration import iot_hub_connection_string
 
-mqtt_connection_time_to_live_minutes = 15
+mqtt_connection_time_to_live_minutes = 45
 max_cloud_events = 200
 
 
@@ -28,15 +28,16 @@ class TelemetryClient:
             try_or_retry_times(self._get_mqtt_client, 3)
 
         def send_telemetry():
-            if not self.connection.isconnected():
-                self.connection = network.Cellular()
+            if self.connection.isconnected():
+                self.number_of_cloud_events += 1
+                self.mqtt_client.send(dumps(telemetry))
+                print('Telemetry Sent')
+                return
 
-                while not self.connection.isconnected():
-                    print("Waiting for network connection...")
-                    sleep(4)
-
-            self.number_of_cloud_events += 1
-            self.mqtt_client.send(dumps(telemetry))
+            self.connection = network.Cellular()
+            while not self.connection.isconnected():
+                print("Waiting for network connection...")
+                sleep(4)
 
         try_or_retry_times(send_telemetry, 3)
 
