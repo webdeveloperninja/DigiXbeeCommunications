@@ -7,6 +7,7 @@ from configuration import iot_hub_connection_string
 
 mqtt_connection_time_to_live_minutes = 45
 max_cloud_events = 200
+minutes_in_a_day = 1440
 
 
 class TelemetryClient:
@@ -14,16 +15,26 @@ class TelemetryClient:
     mqtt_client_expired_at_ticks = None
     number_of_cloud_events = 0
     connection = None
+    next_day_ticks = None
 
     def init(self):
         print('init telemetry client')
         try_or_retry_times(self._get_mqtt_client, 3)
 
     def send_telemetry(self, telemetry):
+        current_ticks_ms = ticks_ms()
+
+        if self.next_day_ticks is None:
+            self.next_day_ticks = ticks_per_minute(minutes_in_a_day) + current_ticks_ms
+
+        if current_ticks_ms > self.next_day_ticks:
+            self.number_of_cloud_events = 0
+            self.next_day_ticks = ticks_per_minute(minutes_in_a_day) + current_ticks_ms
+
         if self.number_of_cloud_events > max_cloud_events or self.mqtt_client_expired_at_ticks is None:
             return
 
-        if ticks_ms() > self.mqtt_client_expired_at_ticks:
+        if current_ticks_ms > self.mqtt_client_expired_at_ticks:
             print('mqtt client expired: creating new connection')
             try_or_retry_times(self._get_mqtt_client, 3)
 
