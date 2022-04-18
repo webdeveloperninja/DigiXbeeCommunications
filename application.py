@@ -26,9 +26,11 @@ speed_sensor_input = ADC(ADC_SPEED_SENSOR_ID)
 def start():
     print('startup')
     iot_client = TelemetryClient()
-    iot_client.init()
 
     while True:
+        ## Sleeping the device shuts down open socket connections
+        ## ensure socket is open after sleep
+        iot_client.init()
         sensor_values = get_sensor_values()
 
         my_device_spot_payload = create_my_device_spot_payload(

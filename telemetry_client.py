@@ -39,16 +39,16 @@ class TelemetryClient:
             try_or_retry_times(self._get_mqtt_client, 3)
 
         def send_telemetry():
+            self.connection = network.Cellular()
+            while not self.connection.isconnected():
+                print("Waiting for network connection...")
+                sleep(4)
+
             if self.connection.isconnected():
                 self.number_of_cloud_events += 1
                 self.mqtt_client.send(dumps(telemetry))
                 print('Telemetry Sent')
                 return
-
-            self.connection = network.Cellular()
-            while not self.connection.isconnected():
-                print("Waiting for network connection...")
-                sleep(4)
 
         try_or_retry_times(send_telemetry, 3)
 
@@ -63,7 +63,7 @@ class TelemetryClient:
         print(iot_hub_connection_string)
         self.mqtt_client = AzureMQTT(iot_hub_connection_string)
         print("mqtt client set")
-        self.mqtt_client.setup()
+        try_or_retry_times(self.mqtt_client.setup, 3)
         print('setup complete')
         self.mqtt_client_expired_at_ticks = ticks_per_minute(mqtt_connection_time_to_live_minutes) + ticks_ms()
 
