@@ -1,10 +1,11 @@
-from machine import ADC
+from machine import ADC, WDT, SOFT_RESET
 import xbee
 from time import sleep
 from telemetry_client import TelemetryClient
 from configuration import device_id
 
 SAMPLE_RATE_MINUTES = 10
+WATCH_DOG_FAILURE_MINUTES = 3
 
 ADC_RIGHT_LOAD_CELL_ID = "D0"
 ADC_LEFT_LOAD_CELL_ID = "D1"
@@ -23,11 +24,18 @@ right_load_cell_input = ADC(ADC_RIGHT_LOAD_CELL_ID)
 speed_sensor_input = ADC(ADC_SPEED_SENSOR_ID)
 
 
+def ms_ticks_per_minute(minutes):
+    return minutes * 60000
+
+
 def start():
     print('startup')
     iot_client = TelemetryClient()
+    dog = WDT(timeout=ms_ticks_per_minute(SAMPLE_RATE_MINUTES + WATCH_DOG_FAILURE_MINUTES), response=SOFT_RESET)
 
     while True:
+        dog.feed()
+
         ## Sleeping the device shuts down open socket connections
         ## ensure socket is open after sleep
         iot_client.init()
