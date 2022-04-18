@@ -1,1 +1,1 @@
-# SIEMENS Belt Scale Connected Integrator
+# Resilient Cellular Comm Module for Digi Xbee
