@@ -1,8 +1,9 @@
 from machine import ADC, WDT, SOFT_RESET
 import xbee
 from time import sleep
-from telemetry_client import TelemetryClient
+from telemetry import TelemetryClient
 from configuration import device_id
+from time_conversion import ms_ticks_per_minute, seconds_per_minutes
 
 SAMPLE_RATE_MINUTES = 10
 WATCH_DOG_FAILURE_MINUTES = 3
@@ -27,21 +28,15 @@ right_load_cell_input = ADC(ADC_RIGHT_LOAD_CELL_ID)
 speed_sensor_input = ADC(ADC_SPEED_SENSOR_ID)
 
 
-def ms_ticks_per_minute(minutes):
-    return minutes * 60000
-
-
 def start():
     print('startup')
-    iot_client = TelemetryClient(MAX_CLOUD_EVENTS, MAX_CLOUD_EVENTS_TIME_WINDOW_MINUTES)
-    dog = WDT(timeout=ms_ticks_per_minute(SAMPLE_RATE_MINUTES + WATCH_DOG_FAILURE_MINUTES), response=SOFT_RESET)
+    telemetry_client = TelemetryClient(MAX_CLOUD_EVENTS, MAX_CLOUD_EVENTS_TIME_WINDOW_MINUTES)
+    watch_dog = WDT(timeout=ms_ticks_per_minute(SAMPLE_RATE_MINUTES + WATCH_DOG_FAILURE_MINUTES), response=SOFT_RESET)
 
     while True:
-        dog.feed()
+        watch_dog.feed()
 
-        ## Sleeping the device shuts down open socket connections
-        ## ensure socket is open after sleep
-        iot_client.init()
+        telemetry_client.init()
         sensor_values = get_sensor_values()
 
         my_device_spot_payload = create_my_device_spot_payload(
@@ -50,8 +45,8 @@ def start():
             sensor_values["speedSensor"]
         )
 
-        iot_client.send_telemetry(my_device_spot_payload)
-        sleep(SAMPLE_RATE_MINUTES * 60)
+        telemetry_client.send(my_device_spot_payload)
+        sleep(seconds_per_minutes(SAMPLE_RATE_MINUTES))
 
 
 def get_sensor_values():
