@@ -7,6 +7,9 @@ from configuration import device_id
 SAMPLE_RATE_MINUTES = 10
 WATCH_DOG_FAILURE_MINUTES = 3
 
+MAX_CLOUD_EVENTS = 12
+MAX_CLOUD_EVENTS_TIME_WINDOW_MINUTES = 60
+
 ADC_RIGHT_LOAD_CELL_ID = "D0"
 ADC_LEFT_LOAD_CELL_ID = "D1"
 ADC_SPEED_SENSOR_ID = "D3"
@@ -30,7 +33,7 @@ def ms_ticks_per_minute(minutes):
 
 def start():
     print('startup')
-    iot_client = TelemetryClient()
+    iot_client = TelemetryClient(MAX_CLOUD_EVENTS, MAX_CLOUD_EVENTS_TIME_WINDOW_MINUTES)
     dog = WDT(timeout=ms_ticks_per_minute(SAMPLE_RATE_MINUTES + WATCH_DOG_FAILURE_MINUTES), response=SOFT_RESET)
 
     while True:
