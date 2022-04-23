@@ -47,12 +47,8 @@ class TelemetryClient:
             print('mqtt client expired: creating new connection')
             try_or_retry_times(self._get_mqtt_client, 3)
 
-        def send_telemetry():
-            self.number_of_cloud_events += 1
-            self.mqtt_client.send(dumps(telemetry))
-            print('Telemetry Sent')
-
-        try_or_retry_times(send_telemetry, 3)
+        self.number_of_cloud_events += 1
+        self.mqtt_client.send(dumps(telemetry))
 
     def _get_mqtt_client(self):
         self.connection = network.Cellular()
